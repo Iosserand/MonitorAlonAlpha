@@ -1,11 +1,12 @@
-#define TFT_DC    7
-#define TFT_RST   8 
-#define SCR_WD   240
-#define SCR_HT   240   
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Arduino_ST7789_Fast.h>
 #include <DallasTemperature.h> 
+
+#define TFT_DC    7
+#define TFT_RST   8 
+#define SCR_WD   240
+#define SCR_HT   240   
 #define ThermistorPin 0
 #define TEMP_X 20
 #define TEMP_Y 85
