@@ -17,8 +17,8 @@
 #define ThermistorPin A0  // Pino A0 para leitura analógica
 
 // RELAY connections
-#define buttonPin 2 /// simulaçao
 #define relayPin  0
+bool relayState = true;  // Estado atual do relé
 
 // initialize ST7789 TFT library with hardware SPI module
 // SCK (CLK) ---> NodeMCU pin D5 (GPIO14)
@@ -34,6 +34,10 @@ float previousTemp = -100.0;
 float tempC = 0;
 float minTemp = 200;
 float maxTemp = 0;
+float nominalTemperature = 23.0;  // Temperatura nominal em Celsius
+float upperThreshold = nominalTemperature + 2.0;  // Limite superior
+float lowerThreshold = nominalTemperature - 3.0;  // Limite inferior
+
 
 // Update these with values suitable for your network.
 const char* ssid = "YMSHOPFLOOR";
@@ -46,19 +50,18 @@ unsigned long lastMsg = 0;
 #define MSG_BUFFER_SIZE	(50)
 char msg[MSG_BUFFER_SIZE];
 String mesg;
-int value = 0;
+// int value = 0;
 
 void setup() {
   pinMode(relayPin, OUTPUT);
-  pinMode(buttonPin, INPUT_PULLUP);
+  // pinMode(buttonPin, INPUT_PULLUP);
 
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, 3377);
-  client.setCallback(callback);
+  // client.setCallback(callback);
 
-  Serial.begin(9600);
   Serial.println("Starting up ...");
   // if the display has CS pin try with SPI_MODE0
   tft.init(SCR_WD, SCR_HT, SPI_MODE2);    // init ST7789 display 240x240 pixel
@@ -125,16 +128,25 @@ void loop() {
   unsigned long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
-    ++value;
-    snprintf (msg, MSG_BUFFER_SIZE, "RMTZ2000 Conectado... #%ld", value);
+    snprintf (msg, MSG_BUFFER_SIZE, "Temperatura:  %.2f C°", tempC);
     Serial.print("Publish message: ");
     Serial.println(msg);
-    client.publish("Monitor_Alon_Alpha/Temperatura", msg);
+    client.publish("Monitor_Alon_Alpha/RMTZ2000", msg);
   }
 
+  // Controle do relé baseado na temperatura
+  if (tempC >= upperThreshold && !relayState) {
+    digitalWrite(relayPin, LOW);  // Liga o relé
+    relayState = true;
+  } else if (tempC <= lowerThreshold && relayState) {
+    digitalWrite(relayPin, HIGH);   // Desliga o relé
+    relayState = false;
+  }
 
-  ligarRelay();
-
+  int estado_rele = digitalRead(relayPin);
+  Serial.print("D3 = ");
+  Serial.print(estado_rele);
+  Serial.println();
 
 }
 
@@ -206,22 +218,6 @@ void printMaxTempDegreesSymbol()
   tft.println("C");
 }
 
-void ligarRelay()
-{
-  int state_button = digitalRead(buttonPin);
-  int state_relay = digitalRead(relayPin);
-  if (state_button == LOW) {
-    digitalWrite(relayPin, LOW);
-  } else {
-    digitalWrite(relayPin, HIGH);
-  }
-  // Serial.print("Button[D4] = ");
-  // Serial.print(state_button);
-  // Serial.println();
-  // Serial.print("Rele[D3] = ");
-  // Serial.print(state_relay);
-  // Serial.println();
-}
 
 void setup_wifi() {
 
@@ -278,9 +274,9 @@ void reconnect() {
     if (client.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("Monitor_Alon_Alpha/Temperatura", "MQTT Server is Conected...");
+      client.publish("Monitor_Alon_Alpha/RMTZ2000", "MQTT Server is Conected...");
       // ... and resubscribe
-      client.subscribe("Monitor_Alon_Alpha/Temperatura");
+      client.subscribe("Monitor_Alon_Alpha/RMTZ2000");
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
