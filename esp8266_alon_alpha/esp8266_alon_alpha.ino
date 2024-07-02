@@ -34,9 +34,9 @@ float previousTemp = -100.0;
 float tempC = 0;
 float minTemp = 200;
 float maxTemp = 0;
-float nominalTemperature = 23.0;  // Temperatura nominal em Celsius
+float nominalTemperature = 22.0;  // Temperatura nominal em Celsius
 float upperThreshold = nominalTemperature + 2.0;  // Limite superior
-float lowerThreshold = nominalTemperature - 3.0;  // Limite inferior
+float lowerThreshold = nominalTemperature - 2.0;  // Limite inferior
 
 
 // Update these with values suitable for your network.
@@ -128,7 +128,7 @@ void loop() {
   unsigned long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
-    snprintf (msg, MSG_BUFFER_SIZE, "Temperatura:  %.2f C°", tempC);
+    snprintf (msg, MSG_BUFFER_SIZE, "%.2f C°", tempC);
     Serial.print("Publish message: ");
     Serial.println(msg);
     client.publish("Monitor_Alon_Alpha/RMTZ2000", msg);

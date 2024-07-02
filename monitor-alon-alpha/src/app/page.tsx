@@ -3,7 +3,7 @@
 import styles from "./page.module.css";
 import mqtt from "mqtt";
 import { useEffect, useState } from "react";
-import { Metric } from "./components/Metric";
+import { Metric } from "@/components/Metric";
 
 const TEMPERATURA_TOPIC = "Monitor_Alon_Alpha/RMTZ2000";
 
@@ -30,5 +30,9 @@ export default function Home() {
     }
   }, []);
 
-  return <main className={styles.main}>{metrics.temperature}</main>;
+  return (
+    <main className={styles.main}>
+      <Metric title="Temperatura">{metrics.temperature}</Metric>
+    </main>
+  );
 }
