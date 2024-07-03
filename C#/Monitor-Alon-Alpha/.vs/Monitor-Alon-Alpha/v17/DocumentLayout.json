@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\engad\\Desktop\\Apps\\MonitorAlonAlpha\\C#\\Monitor-Alon-Alpha\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{DDA11060-F685-4FC8-A0C7-E44AE40E9416}|Monitor-Alon-Alpha\\Monitor-Alon-Alpha.csproj|c:\\users\\engad\\desktop\\apps\\monitoralonalpha\\c#\\monitor-alon-alpha\\monitor-alon-alpha\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DDA11060-F685-4FC8-A0C7-E44AE40E9416}|Monitor-Alon-Alpha\\Monitor-Alon-Alpha.csproj|solutionrelative:monitor-alon-alpha\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Class1.cs",
+              "DocumentMoniker": "C:\\Users\\engad\\Desktop\\Apps\\MonitorAlonAlpha\\C#\\Monitor-Alon-Alpha\\Monitor-Alon-Alpha\\Class1.cs",
+              "RelativeDocumentMoniker": "Monitor-Alon-Alpha\\Class1.cs",
+              "ToolTip": "C:\\Users\\engad\\Desktop\\Apps\\MonitorAlonAlpha\\C#\\Monitor-Alon-Alpha\\Monitor-Alon-Alpha\\Class1.cs",
+              "RelativeToolTip": "Monitor-Alon-Alpha\\Class1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-07-03T17:21:17.27Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

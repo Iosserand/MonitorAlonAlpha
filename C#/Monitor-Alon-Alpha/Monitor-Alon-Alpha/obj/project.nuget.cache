@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "HRYt5Z4Yr5E=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\engad\\Desktop\\Apps\\MonitorAlonAlpha\\C#\\Monitor-Alon-Alpha\\Monitor-Alon-Alpha\\Monitor-Alon-Alpha.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\engad\\.nuget\\packages\\mqttnet\\4.3.6.1152\\mqttnet.4.3.6.1152.nupkg.sha512"
+  ],
+  "logs": []
+}

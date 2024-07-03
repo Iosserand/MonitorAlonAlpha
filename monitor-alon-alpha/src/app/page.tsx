@@ -5,7 +5,7 @@ import mqtt from "mqtt";
 import { useEffect, useState } from "react";
 import { Metric } from "@/components/Metric";
 
-const TEMPERATURA_TOPIC = "Monitor_Alon_Alpha/RMTZ2000";
+const TEMPERATURA_TOPIC = "Monitor_Alon_Alpha/RMTZ2000/temperatura";
 
 export default function Home() {
   const [metrics, setMetrics] = useState({

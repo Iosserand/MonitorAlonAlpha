@@ -2,6 +2,9 @@
 #include <Adafruit_ST7789.h>  // Adafruit hardware-specific library for ST7789
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
 
 
 // ST7789 TFT module connections
@@ -13,8 +16,11 @@
 #define TEMP_X 20
 #define TEMP_Y 85 
 
-// NTC Thermostor connections
-#define ThermistorPin A0  // Pino A0 para leitura analógica
+// DHT11 connections
+#define DHTPIN 2  // pin is connected to NodeMCU pin D4 (GPIO2)
+#define DHTTYPE    DHT11     // DHT 11
+DHT_Unified dht(DHTPIN, DHTTYPE);
+uint32_t delayMS;
 
 // RELAY connections
 #define relayPin  0
@@ -25,16 +31,13 @@ bool relayState = true;  // Estado atual do relé
 // MOSI(DIN) ---> NodeMCU pin D7 (GPIO13)
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
 
-// Variavéis de Temperatura
-int Vo;
-float R1 = 10000;
-float logR2, R2, T;
-float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
+
+//Variables for display
 float previousTemp = -100.0;
 float tempC = 0;
 float minTemp = 200;
 float maxTemp = 0;
-float nominalTemperature = 22.0;  // Temperatura nominal em Celsius
+float nominalTemperature = 25.0;  // Temperatura nominal em Celsius
 float upperThreshold = nominalTemperature + 2.0;  // Limite superior
 float lowerThreshold = nominalTemperature - 2.0;  // Limite inferior
 
@@ -43,23 +46,19 @@ float lowerThreshold = nominalTemperature - 2.0;  // Limite inferior
 const char* ssid = "YMSHOPFLOOR";
 const char* password = "Kr4sn@ya7v3zDa";
 const char* mqtt_server = "172.21.68.55";
+const int mqtt_port = 3377;
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-unsigned long lastMsg = 0;
-#define MSG_BUFFER_SIZE	(50)
-char msg[MSG_BUFFER_SIZE];
-String mesg;
-// int value = 0;
 
 void setup() {
   pinMode(relayPin, OUTPUT);
-  // pinMode(buttonPin, INPUT_PULLUP);
-
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
-  Serial.begin(115200);
+
+  Serial.begin(9600);
   setup_wifi();
-  client.setServer(mqtt_server, 3377);
+  client.setServer(mqtt_server, mqtt_port);
   // client.setCallback(callback);
 
   Serial.println("Starting up ...");
@@ -89,24 +88,58 @@ void setup() {
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_RED); 
   tft.println("MAX");
+
+  dht.begin();
+  sensor_t sensor;
+  // delayMS = sensor.min_delay / 1000;
+  delayMS = 1000;
  
 }
 
+
 void loop() {
+
   if (!client.connected()) {
     reconnect();
   }
   client.loop();
 
-  delay(1000);
+  delay(delayMS);
 
-  Vo = analogRead(ThermistorPin);
-  R2 = R1 * (1023.0 / (float)Vo - 1.0);
-  logR2 = log(R2);
-  T = (1.0 / (c1 + c2*logR2 + c3*logR2*logR2*logR2));
-  T = T - 285.15;
-  previousTemp = tempC;
-  tempC = T;
+  // Get temperature event and print its value.
+  sensors_event_t event;
+  dht.temperature().getEvent(&event);
+  if (isnan(event.temperature)) {
+    Serial.println(F("Erro ao ler a temperatura!"));
+  } else {
+    Serial.print(F("Temperatura: "));
+    Serial.print(event.temperature);
+    Serial.println(F("°C"));
+
+    tempC = event.temperature;
+
+    // Publicar temperatura no tópico MQTT
+    char tempString[8];
+    dtostrf(event.temperature, 1, 2, tempString);
+    // Adicionar "°C" ao final da string
+    strcat(tempString, " °C");
+    client.publish("Monitor_Alon_Alpha/RMTZ2000/temperatura", tempString);
+  }
+
+  dht.humidity().getEvent(&event);
+  if (isnan(event.relative_humidity)) {
+    Serial.println(F("Erro ao ler a umidade!"));
+  } else {
+    Serial.print(F("Umidade: "));
+    Serial.print(event.relative_humidity);
+    Serial.println(F("%"));
+
+    // Publicar umidade no tópico MQTT
+    char humString[8];
+    dtostrf(event.relative_humidity, 1, 2, humString);
+    strcat(humString, " %");
+    client.publish("Monitor_Alon_Alpha/RMTZ2000/umidade", humString);
+  }
   if(tempC<minTemp)
     {
       deleteMinTemp();
@@ -116,6 +149,7 @@ void loop() {
     {
       deleteMaxTemp();
       maxTemp = tempC; 
+      
     }
     if(previousTemp!=tempC)
     {
@@ -125,15 +159,6 @@ void loop() {
        printMaxTemp();
     }
  
-  unsigned long now = millis();
-  if (now - lastMsg > 2000) {
-    lastMsg = now;
-    snprintf (msg, MSG_BUFFER_SIZE, "%.2f C°", tempC);
-    Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish("Monitor_Alon_Alpha/RMTZ2000", msg);
-  }
-
   // Controle do relé baseado na temperatura
   if (tempC >= upperThreshold && !relayState) {
     digitalWrite(relayPin, LOW);  // Liga o relé
@@ -143,10 +168,11 @@ void loop() {
     relayState = false;
   }
 
-  int estado_rele = digitalRead(relayPin);
-  Serial.print("D3 = ");
-  Serial.print(estado_rele);
-  Serial.println();
+  // int estado_rele = digitalRead(relayPin);
+  // Serial.print("D3 = ");
+  // Serial.print(estado_rele);
+  // Serial.println();
+
 
 }
 
@@ -156,6 +182,7 @@ void deletePreviousTemp()
   tft.setTextSize(5);
   tft.setTextColor(ST77XX_BLACK);
   tft.println(previousTemp,1);
+  delay(100);
 }
 
 void printTemp()
@@ -164,6 +191,8 @@ void printTemp()
   tft.setTextSize(5);
   tft.setTextColor(ST77XX_WHITE);
   tft.println(tempC,1);
+  delay(100);
+  previousTemp = tempC;
 }
 
 void printMinTemp()
@@ -172,6 +201,7 @@ void printMinTemp()
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_CYAN);
   tft.println(minTemp,1);
+  delay(100);
 }
 
 void printMaxTemp()
@@ -180,6 +210,7 @@ void printMaxTemp()
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_RED);
   tft.println(maxTemp,1);
+  delay(100);
 }
 
 void deleteMaxTemp()
@@ -188,6 +219,7 @@ void deleteMaxTemp()
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.println(maxTemp,1);
+  delay(100);
 }
 
 void deleteMinTemp()
@@ -196,6 +228,7 @@ void deleteMinTemp()
   tft.setTextSize(2);
   tft.setTextColor(ST77XX_BLACK);
   tft.println(minTemp,1);
+  delay(100);
 }
 
 void printMinTempDegreesSymbol()
@@ -206,6 +239,7 @@ void printMinTempDegreesSymbol()
   tft.println((char)247 );
   tft.setCursor(85, 210);
   tft.println("C");
+  delay(100);
 }
 
 void printMaxTempDegreesSymbol()
@@ -216,6 +250,7 @@ void printMaxTempDegreesSymbol()
   tft.println((char)247 );
   tft.setCursor(225, 210);
   tft.println("C");
+  delay(100);
 }
 
 
